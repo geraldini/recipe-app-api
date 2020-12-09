@@ -63,3 +63,20 @@ class TestPrivateIngredientApi(TestCase):
         self.assertEqual(len(response.data), len(user_ingredients))
         for ingredient in response.data:
             self.assertIn(ingredient['name'], user_ingredients)
+
+    def test_create_ingredient_successful(self):
+        """Test creating a new ingredient"""
+        payload = {'name': 'Sugar'}
+        response = self.client.post(INGREDIENTS_API_URL, payload)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        exists = Ingredient.objects.filter(
+            user=self.user,
+            name=payload['name'],
+        ).exists()
+        self.assertTrue(exists)
+
+    def test_create_empty_ingredient(self):
+        """Test creating an ingredient with empty name is not allowed"""
+        payload = {'name': ''}
+        response = self.client.post(INGREDIENTS_API_URL, payload)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
