@@ -1,4 +1,6 @@
+from rest_framework import authentication
 from rest_framework import generics
+from rest_framework import permissions
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.settings import api_settings
 
@@ -15,3 +17,16 @@ class CreateTokenView(ObtainAuthToken):
     """Create a new auth token for a user"""
     serializer_class = AuthTokenSerializer
     renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES
+
+
+class ManageUserView(generics.RetrieveUpdateAPIView):
+    """Manage the authenticated user"""
+    serializer_class = UserSerializer
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        """Retrieve and return authenticated user"""
+        # token authentication sets the user in the request,
+        # so we return it here
+        return self.request.user
