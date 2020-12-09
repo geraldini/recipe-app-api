@@ -1,45 +1,35 @@
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-from django.test import TestCase
 
 from rest_framework import status
-from rest_framework.test import APIClient
 
 from core.models import Tag
 from recipe.serializers import TagSerializer
+from recipe.tests.test_api_base import TestPublicApi
+from recipe.tests.test_api_base import TestPrivateApi
 
 
-TAGS_API_URL = reverse('recipe:tag-list')
-
-
-class TestPublicTagsApi(TestCase):
+class TestPublicTagsApi(TestPublicApi):
     """Test the publicly available tags API"""
 
-    def setUp(self):
-        self.client = APIClient()
+    API_URL = reverse('recipe:tag-list')
 
     def test_login_required(self):
         """Test that login is required to retrieve tags"""
-        response = self.client.get(TAGS_API_URL)
+        response = self.client.get(self.API_URL)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
-class TestPrivateTagsApi(TestCase):
-    def setUp(self):
-        self.client = APIClient()
-        self.user = get_user_model().objects.create_user(
-            'nhpgeraldes@gmail.com',
-            'password123',
-        )
-        self.client = APIClient()
-        self.client.force_authenticate(self.user)
+class TestPrivateTagsApi(TestPrivateApi):
+
+    API_URL = reverse('recipe:tag-list')
 
     def test_retrieve_tags(self):
         """Test retrieving tags for an authenticated user"""
         Tag.objects.create(user=self.user, name='Italian')
         Tag.objects.create(user=self.user, name='Indian')
 
-        response = self.client.get(TAGS_API_URL)
+        response = self.client.get(self.API_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         tags = Tag.objects.all().order_by('-name')
@@ -58,7 +48,7 @@ class TestPrivateTagsApi(TestCase):
         for tag in user_tags:
             Tag.objects.create(user=self.user, name=tag)
 
-        response = self.client.get(TAGS_API_URL)
+        response = self.client.get(self.API_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), len(user_tags))
         for tag in response.data:
@@ -69,7 +59,7 @@ class TestPrivateTagsApi(TestCase):
         payload = {
             'name': 'Portuguese',
         }
-        self.client.post(TAGS_API_URL, payload)
+        self.client.post(self.API_URL, payload)
 
         exists = Tag.objects.filter(
             user=self.user,
@@ -83,5 +73,5 @@ class TestPrivateTagsApi(TestCase):
         payload = {
             'name': '',
         }
-        response = self.client.post(TAGS_API_URL, payload)
+        response = self.client.post(self.API_URL, payload)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
