@@ -63,3 +63,25 @@ class TestPrivateTagsApi(TestCase):
         self.assertEqual(len(response.data), len(user_tags))
         for tag in response.data:
             self.assertIn(tag['name'], user_tags)
+
+    def test_create_tag_successful(self):
+        """Test creation of a new tag"""
+        payload = {
+            'name': 'Portuguese',
+        }
+        self.client.post(TAGS_API_URL, payload)
+
+        exists = Tag.objects.filter(
+            user=self.user,
+            name=payload['name'],
+        ).exists()
+
+        self.assertTrue(exists)
+
+    def test_create_empty_tag(self):
+        """Test creating a new tag with an empty name"""
+        payload = {
+            'name': '',
+        }
+        response = self.client.post(TAGS_API_URL, payload)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
