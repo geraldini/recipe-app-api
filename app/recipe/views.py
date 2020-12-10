@@ -4,6 +4,7 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 
 from core.models import Ingredient
+from core.models import Recipe
 from core.models import Tag
 from recipe import serializers
 
@@ -36,3 +37,9 @@ class IngredientViewSet(RecipeItemViewSet):
     """Manage ingredients in the database"""
     queryset = Ingredient.objects.all()
     serializer_class = serializers.IngredientSerializer
+
+
+class RecipeViewSet(RecipeItemViewSet):
+    """Manage ingredients in the database"""
+    queryset = Recipe.objects.all()
+    serializer_class = serializers.RecipeSerializer
