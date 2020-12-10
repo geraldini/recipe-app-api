@@ -1,6 +1,5 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
-
 from rest_framework.test import APIClient
 from rest_framework import status
 
@@ -24,5 +23,4 @@ class TestPrivateApi(TestCase):
             'nhpgeraldes@gmail.com',
             'password123',
         )
-        self.client = APIClient()
         self.client.force_authenticate(self.user)
