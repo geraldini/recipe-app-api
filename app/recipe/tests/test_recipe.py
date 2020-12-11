@@ -200,6 +200,62 @@ class TestPrivateTagsApi(TestPrivateApi):
         tags = recipe.tags.all()
         self.assertEqual(len(tags), 0)
 
+    def test_filter_recipes_by_tags(self):
+        """Test returning recipes with specific tags"""
+        recipe1 = create_recipe(user=self.user, name='Thai vegetable curry')
+        recipe2 = create_recipe(user=self.user, name='Aubergine with tahini')
+        recipe3 = create_recipe(user=self.user, name='Fish and chips')
+        tag1 = create_tag(user=self.user, name='Vegan')
+        tag2 = create_tag(user=self.user, name='Vegetarian')
+        recipe1.tags.add(tag1)
+        recipe2.tags.add(tag2)
+
+        response = self.client.get(
+            self.API_URL,
+            {'tags': f'{tag1.id},{tag2.id}'},
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        serializer1 = RecipeSerializer(recipe1)
+        serializer2 = RecipeSerializer(recipe2)
+        serializer3 = RecipeSerializer(recipe3)
+
+        self.assertIn(serializer1.data, response.data)
+        self.assertIn(serializer2.data, response.data)
+        self.assertNotIn(serializer3.data, response.data)
+
+    def test_filter_recipes_by_ingredients(self):
+        """Test returning recipes with specific ingredients"""
+        ingredient1 = create_ingredient(user=self.user, name='Bacalhau')
+        ingredient2 = create_ingredient(user=self.user, name='Batatas')
+        ingredient3 = create_ingredient(user=self.user, name='Natas')
+        ingredient4 = create_ingredient(user=self.user, name='Arroz')
+
+        recipe1 = create_recipe(user=self.user, name='Bacalhau com batatas')
+        recipe1.ingredients.add(ingredient1)
+        recipe1.ingredients.add(ingredient3)
+
+        recipe2 = create_recipe(user=self.user, name='Bacalhau com natas')
+        recipe2.ingredients.add(ingredient2)
+        recipe2.ingredients.add(ingredient3)
+
+        recipe3 = create_recipe(user=self.user, name='Arroz de pato')
+        recipe3.ingredients.add(ingredient4)
+
+        response = self.client.get(
+            self.API_URL,
+            {'ingredients': f'{ingredient1.id},{ingredient2.id}'},
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        serializer1 = RecipeSerializer(recipe1)
+        serializer2 = RecipeSerializer(recipe2)
+        serializer3 = RecipeSerializer(recipe3)
+
+        self.assertIn(serializer1.data, response.data)
+        self.assertIn(serializer2.data, response.data)
+        self.assertNotIn(serializer3.data, response.data)
+
 
 class TestRecipeImageUpload(TestPrivateApi):
 

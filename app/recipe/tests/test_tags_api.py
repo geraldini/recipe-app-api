@@ -3,6 +3,7 @@ from django.urls import reverse
 
 from rest_framework import status
 
+from core.models import Recipe
 from core.models import Tag
 from recipe.serializers import TagSerializer
 from recipe.tests.test_api_base import TestPublicApi
@@ -75,3 +76,52 @@ class TestPrivateTagsApi(TestPrivateApi):
         }
         response = self.client.post(self.API_URL, payload)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_retrieve_tags_assigned_to_recipes(self):
+        """Test filtering tags that are assigned to recipes"""
+        tag1 = Tag.objects.create(user=self.user, name='Breakfast')
+        Tag.objects.create(user=self.user, name='Dinner')
+        recipe = Recipe.objects.create(
+            user=self.user,
+            name='Avocado toast',
+            price=7.5,
+            time_minutes=5,
+        )
+        recipe.tags.add(tag1)
+
+        response = self.client.get(self.API_URL, {'assigned_only': 1})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        serializer1 = TagSerializer(tag1)
+
+        self.assertEqual(len(response.data), 1)
+        self.assertIn(serializer1.data, response.data)
+
+    def test_retrieve_tags_assigned_to_recipe_unique(self):
+        """Test that filtering assigned tags are unique"""
+        tag1 = Tag.objects.create(user=self.user, name='Breakfast')
+        Tag.objects.create(user=self.user, name='Dinner')
+
+        recipe1 = Recipe.objects.create(
+            user=self.user,
+            name='Avocado toast',
+            price=7.5,
+            time_minutes=5,
+        )
+        recipe1.tags.add(tag1)
+
+        recipe2 = Recipe.objects.create(
+            user=self.user,
+            name='Eggs benedict',
+            price=15.0,
+            time_minutes=12,
+        )
+        recipe2.tags.add(tag1)
+
+        response = self.client.get(self.API_URL, {'assigned_only': 1})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        serializer1 = TagSerializer(tag1)
+
+        self.assertEqual(len(response.data), 1)
+        self.assertIn(serializer1.data, response.data)
